@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "52791726499",
+    "project_id": "infedu-df829",
+    "storage_bucket": "infedu-df829.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:52791726499:android:b09350f28331bf9589ca16",
+        "android_client_info": {
+          "package_name": "com.example.inf_edu_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDK66YXgs3IIGQENJMHUdHF7vqPUVamhag"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
