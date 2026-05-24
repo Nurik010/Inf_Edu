@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:go_router/go_router.dart';
 import 'package:inf_edu_app/models/topic_model.dart';
 import '../../app/providers.dart';
@@ -414,12 +415,44 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
                     decoration: AppTheme.cardDecoration,
-                    child: Text(
-                      _currentTopic!.content,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        height: 1.6,
-                        color: AppTheme.textPrimary,
+                    child: Markdown(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      data: _currentTopic!.content,
+                      styleSheet: MarkdownStyleSheet(
+                        p: const TextStyle(
+                          fontSize: 15,
+                          height: 1.6,
+                          color: AppTheme.textPrimary,
+                        ),
+                        h1: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textPrimary,
+                        ),
+                        h2: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textPrimary,
+                        ),
+                        h3: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.textPrimary,
+                        ),
+                        listBullet: const TextStyle(
+                          fontSize: 15,
+                          color: AppTheme.textPrimary,
+                        ),
+                        code: const TextStyle(
+                          fontSize: 13,
+                          color: AppTheme.textPrimary,
+                          backgroundColor: Color(0xFFF0F0F0),
+                        ),
+                        codeblockDecoration: BoxDecoration(
+                          color: const Color(0xFFF5F5F5),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
                     ),
                   ),
