@@ -1,6 +1,7 @@
 ﻿import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:inf_edu_app/models/test_result_model.dart';
+import 'package:inf_edu_app/models/final_test_result_model.dart';
 import 'package:inf_edu_app/models/topic_model.dart';
 import 'package:inf_edu_app/data/default_questions.dart';
 import 'package:inf_edu_app/models/question_model.dart';
@@ -70,6 +71,35 @@ class FirestoreService {
     }
   }
 
+  // Final questions
+  Future<List<QuestionModel>> getFinalQuestions(String topicId) async {
+    try {
+      final snapshot = await _firestore
+          .collection('topics')
+          .doc(topicId)
+          .collection('finalQuestions')
+          .get();
+
+      if (snapshot.docs.isEmpty) {
+        print('Финальных вопросов в Firestore нет');
+        return [];
+      }
+
+      return snapshot.docs
+          .map((doc) => QuestionModel.fromJson(doc.id, doc.data() as Map<String, dynamic>))
+          .toList()
+        ..shuffle();
+    } catch (e) {
+      print('Ошибка загрузки финальных вопросов: $e');
+      return [];
+    }
+  }
+
+  Future<void> saveFinalTestResult(FinalTestResultModel result) async {
+    await _firestore.collection('final_test_results').add(result.toJson());
+    await _updateUserStats(result.userId);
+  }
+
   // Test results
   Future<void> saveTestResult(TestResultModel result) async {
     await _firestore.collection('test_results').add(result.toJson());
@@ -85,6 +115,18 @@ class FirestoreService {
     return snapshot.docs
         .map((doc) => TestResultModel.fromJson(doc.id, doc.data()))
         .toList();
+  }
+
+  Future<List<FinalTestResultModel>> getUserFinalTestResults(String userId) async {
+    final snapshot = await _firestore
+        .collection('final_test_results')
+        .where('userId', isEqualTo: userId)
+        .get();
+    final results = snapshot.docs
+        .map((doc) => FinalTestResultModel.fromJson(doc.id, doc.data()))
+        .toList();
+    results.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    return results;
   }
 
   Future<List<TestResultModel>> getTopicTestResults(

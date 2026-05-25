@@ -10,6 +10,7 @@ import '../features/module_selection_screen.dart';
 import '../features/profile_screen.dart';
 import '../features/stats_screen.dart';
 import '../features/test_screen.dart';
+import '../features/final_test_screen.dart';
 import '../features/splash/splash_screen.dart';
 import '../domain/providers/auth_providers.dart';
 
@@ -70,6 +71,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(path: '/stats', builder: (_, __) => const StatsScreen()),
       GoRoute(path: '/test', builder: (_, __) => const TestScreen()),
+      GoRoute(
+        path: '/final-test',
+        builder: (_, __) => const FinalTestScreen(),
+      ),
     ],
   );
 });

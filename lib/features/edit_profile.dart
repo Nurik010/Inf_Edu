@@ -16,6 +16,7 @@ class EditProfileScreen extends ConsumerStatefulWidget {
 class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   final _nameController = TextEditingController();
   final _ageController = TextEditingController();
+  final _teacherEmailController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isSaving = false;
 
@@ -30,6 +31,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     userAsync.whenData((user) {
       _nameController.text = user?.name ?? '';
       _ageController.text = user?.age.toString() ?? '';
+      _teacherEmailController.text = user?.teacherEmail ?? '';
     });
   }
 
@@ -55,6 +57,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     await FirestoreService().updateUser(userId, {
       'name': _nameController.text,
       'age': age,
+      'teacherEmail': _teacherEmailController.text.trim(),
     });
 
     await FirebaseAuth.instance.currentUser
@@ -151,6 +154,16 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         }
                         return null;
                       },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _teacherEmailController,
+                      decoration: const InputDecoration(
+                        labelText: 'Email учителя',
+                        hintText: 'teacher@example.com',
+                        prefixIcon: Icon(Icons.mail_outline_rounded),
+                      ),
+                      keyboardType: TextInputType.emailAddress,
                     ),
                     const SizedBox(height: 24),
                     SizedBox(

@@ -21,6 +21,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   bool _isLoading = true;
   String? _error;
   String? _lastLoadedTopicId;
+  bool _isTopicCompleted = false;
 
   @override
   void initState() {
@@ -81,9 +82,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
       final topic = await FirestoreService().getTopic(topicId);
 
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      bool completed = false;
+      if (userId != null && topicId.isNotEmpty) {
+        final results = await FirestoreService().getTopicTestResults(userId, topicId);
+        completed = results.any((r) => r.percentage >= 70);
+      }
+
       if (mounted) {
         setState(() {
           _currentTopic = topic;
+          _isTopicCompleted = completed;
           _isLoading = false;
         });
       }
@@ -491,6 +500,42 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       ),
                     ),
                   ),
+                  if (_isTopicCompleted) ...[
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 54,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          final currentTopicId =
+                              ref.read(selectedTopicIdProvider);
+                          if (currentTopicId == null ||
+                              currentTopicId.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Сначала выберите тему'),
+                              ),
+                            );
+                            return;
+                          }
+                          await context.push('/final-test');
+                          ref.read(refreshUserDataProvider.notifier).state =
+                              !ref.read(refreshUserDataProvider.notifier).state;
+                        },
+                        icon: const Icon(Icons.workspace_premium_rounded),
+                        label: const Text(
+                          'Финальный тест',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primary,
+                          foregroundColor: Colors.white,
+                          elevation: 4,
+                          shadowColor: AppTheme.primary.withAlpha(80),
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

@@ -98,6 +98,15 @@ class ProfileScreen extends ConsumerWidget {
                         label: 'Текущая тема',
                         value: userData?.selectedTopic ?? 'Не выбрана',
                       ),
+                      if (userData?.teacherEmail != null &&
+                          userData!.teacherEmail!.isNotEmpty) ...[
+                        const Divider(height: 24),
+                        _ProfileRow(
+                          icon: Icons.mail_outline_rounded,
+                          label: 'Email учителя',
+                          value: userData.teacherEmail!,
+                        ),
+                      ],
                     ],
                   ),
                 ),

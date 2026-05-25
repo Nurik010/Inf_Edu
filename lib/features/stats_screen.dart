@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:inf_edu_app/models/user_model.dart';
 import 'package:inf_edu_app/models/test_result_model.dart';
+import 'package:inf_edu_app/models/final_test_result_model.dart';
 import '../../services/firestore_service.dart';
 import '../../core/theme/app_theme.dart';
 
@@ -17,6 +18,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
   List<Map<String, dynamic>> _ranking = [];
   Map<String, dynamic>? _userStats;
   List<TestResultModel> _testResults = [];
+  List<FinalTestResultModel> _finalTestResults = [];
   final Map<String, String> _topicNames = {};
   bool _isLoading = true;
 
@@ -36,6 +38,9 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
 
       final results = await FirestoreService().getUserTestResults(userId);
       _testResults = results;
+
+      final finalResults = await FirestoreService().getUserFinalTestResults(userId);
+      _finalTestResults = finalResults;
 
       final allTopics = await FirestoreService().getTopics();
       for (final topic in allTopics) {
@@ -129,6 +134,107 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
               const SizedBox(height: 16),
               ...List.generate(_testResults.length, (index) {
                 final result = _testResults[index];
+                final topicName =
+                    _topicNames[result.topicId] ?? 'Неизвестная тема';
+                final isPassed = result.percentage >= 70;
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 12),
+                  decoration: AppTheme.cardDecoration,
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: isPassed
+                              ? AppTheme.success.withAlpha(20)
+                              : AppTheme.error.withAlpha(20),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          isPassed
+                              ? Icons.check_circle_rounded
+                              : Icons.cancel_rounded,
+                          color:
+                              isPassed ? AppTheme.success : AppTheme.error,
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              topicName,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w500,
+                                fontSize: 15,
+                                color: AppTheme.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${result.score}/${result.total}',
+                              style: const TextStyle(
+                                color: AppTheme.textSecondary,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: isPassed
+                              ? AppTheme.primaryGradient
+                              : LinearGradient(
+                                  colors: [
+                                    AppTheme.textSecondary,
+                                    AppTheme.textSecondary,
+                                  ],
+                                ),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          '${result.percentage.toStringAsFixed(0)}%',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ],
+            if (_finalTestResults.isNotEmpty) ...[
+              const SizedBox(height: 28),
+              const Row(
+                children: [
+                  Icon(Icons.workspace_premium_rounded,
+                      color: AppTheme.primary, size: 24),
+                  SizedBox(width: 8),
+                  Text(
+                    'Финальные тесты',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              ...List.generate(_finalTestResults.length, (index) {
+                final result = _finalTestResults[index];
                 final topicName =
                     _topicNames[result.topicId] ?? 'Неизвестная тема';
                 final isPassed = result.percentage >= 70;

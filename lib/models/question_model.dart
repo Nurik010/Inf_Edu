@@ -46,7 +46,9 @@ class QuestionModel {
       type: type,
       explanation: json['explanation'] ?? '',
       options: json['options'] != null ? List<String>.from(json['options']) : null,
-      correctIndex: json['correctIndex'] as int?,
+      correctIndex: json['correctIndex'] is String
+          ? int.tryParse(json['correctIndex'] as String)
+          : json['correctIndex'] as int?,
       codeLines: json['codeLines'] != null ? List<String>.from(json['codeLines']) : null,
       correctOrder: json['correctOrder'] != null ? List<int>.from(json['correctOrder']) : null,
       matchTerms: json['matchTerms'] != null ? List<String>.from(json['matchTerms']) : null,
