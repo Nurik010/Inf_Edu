@@ -33,19 +33,42 @@ class _CodeOrderingWidgetState extends State<CodeOrderingWidget> {
     _usedLines = List.filled(widget.codeLines.length, false);
   }
 
-  void _acceptLine(int slotIndex, int lineIndex) {
+  void _acceptLine(int slotIndex, int data) {
     setState(() {
-      final oldLine = _slots[slotIndex];
-      if (oldLine != null) {
-        _usedLines[oldLine] = false;
+      if (data < 0) {
+        final sourceSlot = -data - 1;
+        if (sourceSlot == slotIndex) return;
+        final lineIndex = _slots[sourceSlot];
+        if (lineIndex == null) return;
+        final oldLine = _slots[slotIndex];
+        if (oldLine != null) {
+          _usedLines[oldLine] = false;
+        }
+        _slots[sourceSlot] = null;
+        _slots[slotIndex] = lineIndex;
+      } else {
+        if (_usedLines[data]) return;
+        final oldLine = _slots[slotIndex];
+        if (oldLine != null) {
+          _usedLines[oldLine] = false;
+        }
+        _slots[slotIndex] = data;
+        _usedLines[data] = true;
       }
-      _slots[slotIndex] = lineIndex;
-      _usedLines[lineIndex] = true;
     });
 
     if (_slots.every((s) => s != null)) {
       widget.onAnswer(_slots.cast<int>());
     }
+  }
+
+  void _returnLine(int slotIndex) {
+    setState(() {
+      final lineIndex = _slots[slotIndex];
+      if (lineIndex == null) return;
+      _slots[slotIndex] = null;
+      _usedLines[lineIndex] = false;
+    });
   }
 
   @override
@@ -119,14 +142,43 @@ class _CodeOrderingWidgetState extends State<CodeOrderingWidget> {
           ),
         ),
         const SizedBox(height: 8),
-        if (widget.codeLines.every((_) => true))
-          ...List.generate(widget.codeLines.length, (i) {
-            if (_usedLines[i]) return const SizedBox.shrink();
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: DraggableChip(label: widget.codeLines[i], index: i),
+        DragTarget<int>(
+          onAcceptWithDetails: (details) {
+            if (details.data < 0) {
+              final sourceSlot = -details.data - 1;
+              _returnLine(sourceSlot);
+            }
+          },
+          onWillAcceptWithDetails: (details) =>
+              !widget.revealed && details.data < 0,
+          builder: (context, candidates, rejected) {
+            final isHovered = candidates.isNotEmpty;
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isHovered
+                    ? AppTheme.primary.withAlpha(30)
+                    : Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isHovered ? AppTheme.primary : Colors.grey.shade200,
+                  width: isHovered ? 2 : 1,
+                ),
+              ),
+              child: Column(
+                children: List.generate(widget.codeLines.length, (i) {
+                  if (_usedLines[i]) return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child:
+                        DraggableChip(label: widget.codeLines[i], index: i),
+                  );
+                }),
+              ),
             );
-          }),
+          },
+        ),
         const SizedBox(height: 20),
         const Text(
           'Ваш порядок:',
@@ -141,17 +193,219 @@ class _CodeOrderingWidgetState extends State<CodeOrderingWidget> {
           final lineIndex = _slots[i];
           return Padding(
             padding: const EdgeInsets.only(bottom: 4),
-            child: DragTargetSlot(
-              index: i,
-              label: lineIndex != null ? widget.codeLines[lineIndex] : null,
-              revealed: widget.revealed,
-              isCorrect: widget.revealed && lineIndex != null
-                  ? _slots[i] == widget.correctOrder[i]
-                  : false,
-              onAccept: (data) {
-                if (data != null && !widget.revealed) {
-                  _acceptLine(i, data);
+            child: DragTarget<int>(
+              onAcceptWithDetails: (details) {
+                if (!widget.revealed) _acceptLine(i, details.data);
+              },
+              onWillAcceptWithDetails: (details) {
+                if (widget.revealed) return false;
+                if (details.data < 0) {
+                  return -details.data - 1 != i;
                 }
+                return !_usedLines[details.data];
+              },
+              builder: (context, candidates, rejected) {
+                final isHovered = candidates.isNotEmpty;
+
+                Color borderColor;
+                Color bgColor;
+
+                if (widget.revealed) {
+                  final isCorrect = lineIndex != null &&
+                      _slots[i] == widget.correctOrder[i];
+                  bgColor = isCorrect
+                      ? AppTheme.success.withAlpha(25)
+                      : AppTheme.error.withAlpha(25);
+                  borderColor = isCorrect ? AppTheme.success : AppTheme.error;
+                } else if (lineIndex != null) {
+                  bgColor = AppTheme.primary.withAlpha(25);
+                  borderColor = AppTheme.primary;
+                } else {
+                  bgColor = isHovered
+                      ? AppTheme.primary.withAlpha(30)
+                      : Colors.grey.shade50;
+                  borderColor = isHovered
+                      ? AppTheme.primary
+                      : Colors.grey.shade300;
+                }
+
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  constraints: const BoxConstraints(minHeight: 40),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: bgColor,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: borderColor,
+                      width: isHovered || lineIndex != null ? 2 : 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: lineIndex != null
+                              ? AppTheme.primary.withAlpha(30)
+                              : Colors.transparent,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            '${i + 1}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: lineIndex != null
+                                  ? AppTheme.primary
+                                  : Colors.grey.shade400,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: lineIndex != null
+                            ? widget.revealed
+                                ? Text(
+                                    widget.codeLines[lineIndex],
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: _slots[i] == widget.correctOrder[i]
+                                          ? AppTheme.success
+                                          : AppTheme.error,
+                                    ),
+                                    maxLines: 3,
+                                    overflow: TextOverflow.ellipsis,
+                                  )
+                                : GestureDetector(
+                                    onTap: () => _returnLine(i),
+                                    child: LongPressDraggable<int>(
+                                      data: -(i + 1),
+                                      delay: const Duration(
+                                          milliseconds: 100),
+                                      feedback: Material(
+                                        elevation: 6,
+                                        borderRadius:
+                                            BorderRadius.circular(8),
+                                        shadowColor:
+                                            AppTheme.primary.withAlpha(80),
+                                        child: Container(
+                                          constraints: const BoxConstraints(
+                                              maxWidth: 280),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 14,
+                                            vertical: 10,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            gradient:
+                                                AppTheme.primaryGradient,
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          child: Text(
+                                            widget.codeLines[lineIndex],
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.white,
+                                            ),
+                                            maxLines: 2,
+                                            overflow:
+                                                TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ),
+                                      childWhenDragging: Row(
+                                        children: [
+                                          Container(
+                                            width: 24,
+                                            height: 24,
+                                            decoration: const BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: Colors.transparent,
+                                            ),
+                                            child: Center(
+                                              child: Text(
+                                                '${i + 1}',
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight:
+                                                      FontWeight.w600,
+                                                  color:
+                                                      Colors.grey.shade400,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Text(
+                                            'Перетащите сюда',
+                                            style: TextStyle(
+                                              color: Colors.grey.shade400,
+                                              fontSize: 13,
+                                              fontStyle: FontStyle.italic,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          const Padding(
+                                            padding:
+                                                EdgeInsets.only(right: 6),
+                                            child: Icon(
+                                              Icons.close,
+                                              size: 14,
+                                              color: AppTheme.primary,
+                                            ),
+                                          ),
+                                          Flexible(
+                                            child: Text(
+                                              widget.codeLines[lineIndex],
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                color:
+                                                    AppTheme.textPrimary,
+                                              ),
+                                              maxLines: 3,
+                                              overflow:
+                                                  TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  )
+                            : Text(
+                                'Перетащите сюда',
+                                style: TextStyle(
+                                  color: Colors.grey.shade400,
+                                  fontSize: 13,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                      ),
+                      if (widget.revealed)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8),
+                          child: Icon(
+                            lineIndex != null &&
+                                    _slots[i] == widget.correctOrder[i]
+                                ? Icons.check_circle
+                                : Icons.cancel,
+                            color: lineIndex != null &&
+                                    _slots[i] == widget.correctOrder[i]
+                                ? AppTheme.success
+                                : AppTheme.error,
+                            size: 20,
+                          ),
+                        ),
+                    ],
+                  ),
+                );
               },
             ),
           );

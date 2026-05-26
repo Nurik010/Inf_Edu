@@ -319,6 +319,7 @@ class _ModuleSelectionScreenState
                     )
                   else
                     DropdownButtonFormField<TopicModel>(
+                      isExpanded: true,
                       value: _selectedTopic,
                       decoration: const InputDecoration(
                         hintText: 'Выберите тему',

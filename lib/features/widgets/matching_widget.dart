@@ -61,8 +61,32 @@
       }
     }
 
-    @override
-    Widget build(BuildContext context) {
+    void _returnTerm(String definition) {
+      setState(() {
+        final term = _matches[definition];
+        if (term == null) return;
+        final termIndex = widget.matchTerms.indexOf(term);
+        if (termIndex != -1) _usedTerms[termIndex] = false;
+        _matches[definition] = null;
+      });
+      if (_matches.values.every((v) => v != null)) {
+        widget.onAnswer(_matches.map((key, value) => MapEntry(key, value!)));
+      }
+    }
+
+    void _returnTermByIndex(int termIndex) {
+      final term = widget.matchTerms[termIndex];
+      final def = _matches.entries
+          .firstWhere(
+            (e) => e.value == term,
+            orElse: () => const MapEntry('', null),
+          )
+          .key;
+      if (def.isNotEmpty) _returnTerm(def);
+    }
+
+  @override
+  Widget build(BuildContext context) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -124,22 +148,37 @@
             ),
           ),
           const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade50,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade200),
-            ),
-            child: Column(
-              children: List.generate(widget.matchTerms.length, (i) {
-                if (_usedTerms[i]) return const SizedBox.shrink();
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
-                  child: DraggableChip(label: widget.matchTerms[i], index: i),
-                );
-              }),
-            ),
+          DragTarget<int>(
+            onAcceptWithDetails: (details) => _returnTermByIndex(details.data),
+            onWillAcceptWithDetails: (details) =>
+                !_usedTerms[details.data] && widget.matchTerms.length > details.data,
+            builder: (context, candidates, rejected) {
+              final isHovered = candidates.isNotEmpty;
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isHovered
+                      ? AppTheme.primary.withAlpha(30)
+                      : Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isHovered ? AppTheme.primary : Colors.grey.shade200,
+                    width: isHovered ? 2 : 1,
+                  ),
+                ),
+                child: Column(
+                  children: List.generate(widget.matchTerms.length, (i) {
+                    if (_usedTerms[i]) return const SizedBox.shrink();
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: DraggableChip(
+                          label: widget.matchTerms[i], index: i),
+                    );
+                  }),
+                ),
+              );
+            },
           ),
           const SizedBox(height: 20),
           const Text(
@@ -214,31 +253,141 @@
                               if (matchedTerm != null)
                                 Padding(
                                   padding: const EdgeInsets.only(top: 8),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 6,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: widget.revealed
-                                          ? (isCorrect
-                                              ? AppTheme.success.withAlpha(40)
-                                              : AppTheme.error.withAlpha(40))
-                                          : AppTheme.primary.withAlpha(40),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      matchedTerm,
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w500,
-                                        color: widget.revealed
-                                            ? (isCorrect
-                                                ? AppTheme.success
-                                                : AppTheme.error)
-                                            : AppTheme.primary,
-                                      ),
-                                    ),
+                                  child: GestureDetector(
+                                    onTap: widget.revealed
+                                        ? null
+                                        : () => _returnTerm(def),
+                                    child: widget.revealed
+                                        ? Container(
+                                            padding:
+                                                const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 6,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: isCorrect
+                                                  ? AppTheme.success
+                                                      .withAlpha(40)
+                                                  : AppTheme.error
+                                                      .withAlpha(40),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize:
+                                                  MainAxisSize.min,
+                                              children: [
+                                                Text(
+                                                  matchedTerm,
+                                                  style: TextStyle(
+                                                    fontSize: 13,
+                                                    fontWeight:
+                                                        FontWeight.w500,
+                                                    color: isCorrect
+                                                        ? AppTheme.success
+                                                        : AppTheme.error,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          )
+                                        : LongPressDraggable<int>(
+                                            data: widget.matchTerms
+                                                .indexOf(matchedTerm),
+                                            delay: const Duration(
+                                                milliseconds: 100),
+                                            feedback: Material(
+                                              elevation: 6,
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              shadowColor: AppTheme.primary
+                                                  .withAlpha(80),
+                                              child: Container(
+                                                padding: const EdgeInsets
+                                                    .symmetric(
+                                                  horizontal: 12,
+                                                  vertical: 6,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  gradient:
+                                                      AppTheme.primaryGradient,
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          8),
+                                                ),
+                                                child: Text(
+                                                  matchedTerm,
+                                                  style: const TextStyle(
+                                                    fontSize: 13,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            childWhenDragging: Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                horizontal: 12,
+                                                vertical: 6,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color:
+                                                    Colors.grey.shade200,
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                              child: Text(
+                                                matchedTerm,
+                                                style: TextStyle(
+                                                  fontSize: 13,
+                                                  color: Colors.grey
+                                                      .shade400,
+                                                  fontStyle:
+                                                      FontStyle.italic,
+                                                ),
+                                              ),
+                                            ),
+                                            child: Container(
+                                              padding: const EdgeInsets
+                                                  .symmetric(
+                                                horizontal: 12,
+                                                vertical: 6,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: AppTheme.primary
+                                                    .withAlpha(40),
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                              child: Row(
+                                                mainAxisSize:
+                                                    MainAxisSize.min,
+                                                children: [
+                                                  const Padding(
+                                                    padding:
+                                                        EdgeInsets.only(
+                                                            right: 6),
+                                                    child: Icon(
+                                                      Icons.close,
+                                                      size: 14,
+                                                      color:
+                                                          AppTheme.primary,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    matchedTerm,
+                                                    style: const TextStyle(
+                                                      fontSize: 13,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                      color:
+                                                          AppTheme.primary,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
                                   ),
                                 ),
                             ],
