@@ -30,6 +30,7 @@ class AppTheme {
 
   static ThemeData get lightTheme {
     return ThemeData(
+      fontFamily: 'Roboto',
       useMaterial3: true,
       brightness: Brightness.light,
       colorScheme: ColorScheme.light(

@@ -345,7 +345,6 @@ class _ModuleSelectionScreenState
                     (_isSaving || _selectedGrade == null || _selectedTopic == null)
                         ? null
                         : _saveSelection,
-                icon: const Icon(Icons.save_rounded),
                 label: Text(
                   _isSaving ? 'Сохранение...' : 'Сохранить выбор',
                   style: const TextStyle(fontSize: 16),

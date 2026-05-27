@@ -5,7 +5,7 @@ import '../../models/user_model.dart';
 import '../../services/firestore_service.dart';
 
 final authStateProvider = StreamProvider<User?>((ref) {
-  return FirebaseAuth.instance.authStateChanges();
+  return FirebaseAuth.instance.idTokenChanges();
 });
 
 final authInitializedProvider = Provider<bool>((ref) {

@@ -123,7 +123,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('InfEdu'),
+        title: const Text('InfoEd', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25), ),
         actions: [
           Container(
             margin: const EdgeInsets.only(right: 8),
@@ -166,7 +166,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     ),
                     const SizedBox(height: 12),
                     const Text(
-                      'InfEdu',
+                      'InfoEd',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 24,
@@ -430,7 +430,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       data: _currentTopic!.content,
                       styleSheet: MarkdownStyleSheet(
                         p: const TextStyle(
-                          fontSize: 15,
+                          fontSize: 17,
                           height: 1.6,
                           color: AppTheme.textPrimary,
                         ),

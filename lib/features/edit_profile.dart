@@ -133,8 +133,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         labelText: 'Имя',
                         prefixIcon: Icon(Icons.person_outline_rounded),
                       ),
+                      textCapitalization: TextCapitalization.words,
                       validator: (v) {
                         if (v == null || v.isEmpty) return 'Введите имя';
+                        if (v.trim().length < 2) return 'Имя должно содержать минимум 2 символа';
                         return null;
                       },
                     ),

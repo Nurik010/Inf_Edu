@@ -1,4 +1,5 @@
-﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../features/auth/login_screen.dart';
 import '../features/auth/register_screen.dart';
@@ -24,7 +25,8 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       final user = authState.value;
       final isLoggedIn = user != null;
-      final isEmailVerified = user?.emailVerified ?? false;
+      final isEmailVerified = user?.emailVerified ??
+          FirebaseAuth.instance.currentUser?.emailVerified ?? false;
       final location = state.matchedLocation;
 
       if (location == '/splash') {

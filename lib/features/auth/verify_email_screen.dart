@@ -32,7 +32,8 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
       });
       await Future.delayed(const Duration(seconds: 2));
       if (mounted && user.emailVerified) {
-        context.go('/module-selection');
+        await user.getIdToken(true);
+        if (mounted) context.go('/home');
       }
     }
   } else if (mounted && !_isVerified) {
@@ -43,35 +44,6 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   }
 }
 
-  Future<void> _resendEmail() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-
-    try {
-      await user.sendEmailVerification();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Письмо отправлено повторно'),
-            backgroundColor: AppTheme.success,
-          ),
-        );
-      }
-    } on FirebaseAuthException catch (e) {
-      if (mounted) {
-        String message = 'Ошибка отправки';
-        if (e.code == 'too-many-requests') {
-          message = 'Слишком много запросов. Попробуйте через минуту';
-        }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-            backgroundColor: AppTheme.error,
-          ),
-        );
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -201,7 +173,11 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton.icon(
-                      onPressed: _resendEmail,
+                      onPressed: () async {
+                        final user = FirebaseAuth.instance.currentUser;
+                        if (user != null) await user.getIdToken(true);
+                        if (mounted) context.go('/home');
+                      },
                       icon: const Icon(Icons.send_rounded),
                       label: const Text('Отправить повторно'),
                     ),

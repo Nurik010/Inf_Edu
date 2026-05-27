@@ -180,8 +180,10 @@ class _RegisterScreenState extends State<RegisterScreen>
                             labelText: 'Имя',
                             prefixIcon: Icon(Icons.person_outline),
                           ),
+                          textCapitalization: TextCapitalization.words,
                           validator: (v) {
                             if (v == null || v.isEmpty) return 'Введите имя';
+                            if (v.trim().length < 2) return 'Имя должно содержать минимум 2 символа';
                             return null;
                           },
                         ),
