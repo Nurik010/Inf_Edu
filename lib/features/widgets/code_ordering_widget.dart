@@ -37,6 +37,7 @@ class _CodeOrderingWidgetState extends State<CodeOrderingWidget> {
     setState(() {
       if (data < 0) {
         final sourceSlot = -data - 1;
+        if (sourceSlot < 0 || sourceSlot >= _slots.length) return;
         if (sourceSlot == slotIndex) return;
         final lineIndex = _slots[sourceSlot];
         if (lineIndex == null) return;
@@ -47,7 +48,7 @@ class _CodeOrderingWidgetState extends State<CodeOrderingWidget> {
         _slots[sourceSlot] = null;
         _slots[slotIndex] = lineIndex;
       } else {
-        if (_usedLines[data]) return;
+        if (data >= _usedLines.length || _usedLines[data]) return;
         final oldLine = _slots[slotIndex];
         if (oldLine != null) {
           _usedLines[oldLine] = false;
@@ -63,6 +64,7 @@ class _CodeOrderingWidgetState extends State<CodeOrderingWidget> {
   }
 
   void _returnLine(int slotIndex) {
+    if (slotIndex < 0 || slotIndex >= _slots.length) return;
     setState(() {
       final lineIndex = _slots[slotIndex];
       if (lineIndex == null) return;
@@ -200,9 +202,10 @@ class _CodeOrderingWidgetState extends State<CodeOrderingWidget> {
               onWillAcceptWithDetails: (details) {
                 if (widget.revealed) return false;
                 if (details.data < 0) {
-                  return -details.data - 1 != i;
+                  final sourceSlot = -details.data - 1;
+                  return sourceSlot >= 0 && sourceSlot < _slots.length && sourceSlot != i;
                 }
-                return !_usedLines[details.data];
+                return details.data < _usedLines.length && !_usedLines[details.data];
               },
               builder: (context, candidates, rejected) {
                 final isHovered = candidates.isNotEmpty;

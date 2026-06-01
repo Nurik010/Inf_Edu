@@ -82,7 +82,7 @@ class _FinalTestScreenState extends ConsumerState<FinalTestScreen> {
         return;
       }
 
-      _totalTimeSeconds = questions.length * 60;
+      _totalTimeSeconds = questions.length * 20;
       _timeSeconds = _totalTimeSeconds;
 
       setState(() {

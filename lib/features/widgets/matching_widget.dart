@@ -36,6 +36,7 @@
     }
 
     void _acceptTerm(String definition, int termIndex) {
+      if (termIndex < 0 || termIndex >= widget.matchTerms.length) return;
       setState(() {
         final term = widget.matchTerms[termIndex];
         final prevDefForTerm = _matches.entries
@@ -75,6 +76,7 @@
     }
 
     void _returnTermByIndex(int termIndex) {
+      if (termIndex < 0 || termIndex >= widget.matchTerms.length) return;
       final term = widget.matchTerms[termIndex];
       final def = _matches.entries
           .firstWhere(
@@ -151,7 +153,7 @@
           DragTarget<int>(
             onAcceptWithDetails: (details) => _returnTermByIndex(details.data),
             onWillAcceptWithDetails: (details) =>
-                !_usedTerms[details.data] && widget.matchTerms.length > details.data,
+                details.data < _usedTerms.length && !_usedTerms[details.data] && widget.matchTerms.length > details.data,
             builder: (context, candidates, rejected) {
               final isHovered = candidates.isNotEmpty;
               return AnimatedContainer(

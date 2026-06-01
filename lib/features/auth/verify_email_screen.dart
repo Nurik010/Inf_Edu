@@ -32,8 +32,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
       });
       await Future.delayed(const Duration(seconds: 2));
       if (mounted && user.emailVerified) {
-        await user.getIdToken(true);
-        if (mounted) context.go('/home');
+        context.go('/home');
       }
     }
   } else if (mounted && !_isVerified) {
@@ -169,19 +168,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                             color: AppTheme.success,
                           ),
                         ),
-                        SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton.icon(
-                      onPressed: () async {
-                        final user = FirebaseAuth.instance.currentUser;
-                        if (user != null) await user.getIdToken(true);
-                        if (mounted) context.go('/home');
-                      },
-                      icon: const Icon(Icons.send_rounded),
-                      label: const Text('Отправить повторно'),
-                    ),
-                  ),
+                        SizedBox(height: 10,),
                       ],
                     ),
                   const SizedBox(height: 12),
