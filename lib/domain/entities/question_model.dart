@@ -1,4 +1,4 @@
-﻿enum QuestionType { multipleChoice, codeOrdering, matching }
+enum QuestionType { multipleChoice, codeOrdering, matching }
 
 class QuestionModel {
   final String id;

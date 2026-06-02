@@ -1,4 +1,4 @@
-﻿import '../models/question_model.dart';
+import 'package:inf_edu_app/domain/entities/question_model.dart';
 
 class DefaultQuestions {
   static List<QuestionModel> getQuestions(String topicId) {

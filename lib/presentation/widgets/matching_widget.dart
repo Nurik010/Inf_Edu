@@ -1,5 +1,5 @@
-﻿  import 'package:flutter/material.dart';
-  import 'package:inf_edu_app/features/widgets/draggable_chip.dart';
+  import 'package:flutter/material.dart';
+  import 'package:inf_edu_app/presentation/widgets/draggable_chip.dart';
   import '../../core/theme/app_theme.dart';
 
   class MatchingWidget extends StatefulWidget {

@@ -1,24 +1,23 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:inf_edu_app/models/question_model.dart';
-import 'package:inf_edu_app/models/final_test_result_model.dart';
-import 'package:inf_edu_app/features/widgets/question_widget.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:inf_edu_app/domain/entities/question_model.dart';
+import 'package:inf_edu_app/domain/entities/test_result_model.dart';
+import 'package:inf_edu_app/presentation/widgets/question_widget.dart';
 import '../../app/providers.dart';
 import '../../services/firestore_service.dart';
 import '../../core/theme/app_theme.dart';
 
-class FinalTestScreen extends ConsumerStatefulWidget {
-  const FinalTestScreen({super.key});
+class TestScreen extends ConsumerStatefulWidget {
+  const TestScreen({super.key});
 
   @override
-  ConsumerState<FinalTestScreen> createState() => _FinalTestScreenState();
+  ConsumerState<TestScreen> createState() => _TestScreenState();
 }
 
-class _FinalTestScreenState extends ConsumerState<FinalTestScreen> {
+class _TestScreenState extends ConsumerState<TestScreen> {
   int _currentIndex = 0;
   List<dynamic> _userAnswers = [];
   List<QuestionModel> _questions = [];
@@ -27,20 +26,10 @@ class _FinalTestScreenState extends ConsumerState<FinalTestScreen> {
   String? _error;
   String? _currentTopicId;
 
-  int _timeSeconds = 0;
-  int _totalTimeSeconds = 0;
-  Timer? _timer;
-
   @override
   void initState() {
     super.initState();
     _loadQuestions();
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
   }
 
   Future<void> _loadQuestions() async {
@@ -72,56 +61,27 @@ class _FinalTestScreenState extends ConsumerState<FinalTestScreen> {
       }
 
       _currentTopicId = topicId;
-      final questions = await FirestoreService().getFinalQuestions(topicId);
+      final questions = await FirestoreService().getQuestions(topicId);
 
       if (questions.isEmpty) {
         setState(() {
-          _error = 'Нет финальных вопросов для этой темы';
+          _error = 'Нет вопросов для этой темы';
           _isLoading = false;
         });
         return;
       }
-
-      _totalTimeSeconds = questions.length * 20;
-      _timeSeconds = _totalTimeSeconds;
 
       setState(() {
         _questions = questions;
         _userAnswers = List.filled(questions.length, null);
         _isLoading = false;
       });
-
-      _startTimer();
     } catch (e) {
       setState(() {
         _error = 'Ошибка загрузки: $e';
         _isLoading = false;
       });
     }
-  }
-
-  void _startTimer() {
-    _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) {
-        timer.cancel();
-        return;
-      }
-      setState(() {
-        if (_timeSeconds > 0) {
-          _timeSeconds--;
-        } else {
-          timer.cancel();
-          _finishTest();
-        }
-      });
-    });
-  }
-
-  String _formatTime(int seconds) {
-    final m = (seconds ~/ 60).toString().padLeft(2, '0');
-    final s = (seconds % 60).toString().padLeft(2, '0');
-    return '$m:$s';
   }
 
   void _answerQuestion(dynamic answer) {
@@ -166,9 +126,25 @@ class _FinalTestScreenState extends ConsumerState<FinalTestScreen> {
     }
   }
 
-  Future<void> _finishTest() async {
-    _timer?.cancel();
+  Future<void> _playResultSound(double percentage) async {
+    try {
+      final player = AudioPlayer();
+      if (percentage >= 75) {
+        await player.play(AssetSource('music/ura.mp3'));
+      } else if (percentage < 50) {
+        await player.play(AssetSource('music/fail.mp3'));
+      } else {
+        player.dispose();
+        return;
+      }
+      await Future.delayed(const Duration(seconds: 2));
+      player.dispose();
+    } catch (_) {}
+  }
 
+  
+
+  Future<void> _finishTest() async {
     int correctCount = 0;
     for (int i = 0; i < _questions.length; i++) {
       if (_isAnswerCorrect(i)) correctCount++;
@@ -192,12 +168,8 @@ class _FinalTestScreenState extends ConsumerState<FinalTestScreen> {
     }
 
     final percentage = (correctCount / _questions.length) * 100;
-    final timeSpent = _totalTimeSeconds - _timeSeconds;
 
-    final topic = await FirestoreService().getTopic(topicId);
-    final topicName = topic?.title ?? 'Неизвестная тема';
-
-    final result = FinalTestResultModel(
+    final result = TestResultModel(
       id: '',
       userId: userId,
       topicId: topicId,
@@ -205,160 +177,137 @@ class _FinalTestScreenState extends ConsumerState<FinalTestScreen> {
       total: _questions.length,
       percentage: percentage,
       timestamp: DateTime.now(),
-      timeSpentSeconds: timeSpent,
     );
 
-    await FirestoreService().saveFinalTestResult(result);
+    await FirestoreService().saveTestResult(result);
     ref.read(refreshUserDataProvider.notifier).state =
         !ref.read(refreshUserDataProvider.notifier).state;
 
-    if (!mounted) return;
-
-    final userData = await FirestoreService().getUser(userId);
-    final teacherEmail = userData?.teacherEmail ?? '';
-
     setState(() => _testCompleted = true);
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
-        title: const Text(
-          'Финальный тест завершён!',
-          textAlign: TextAlign.center,
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: correctCount >= _questions.length * 0.7
-                    ? AppTheme.success.withAlpha(25)
-                    : AppTheme.warning.withAlpha(25),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                correctCount >= _questions.length * 0.7
-                    ? Icons.celebration_rounded
-                    : Icons.auto_awesome_rounded,
-                size: 48,
-                color: correctCount >= _questions.length * 0.7
-                    ? AppTheme.success
-                    : AppTheme.warning,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Результат: $correctCount из ${_questions.length}',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              decoration: BoxDecoration(
-                gradient: AppTheme.primaryGradient,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                '${percentage.toInt()}%',
+    _playResultSound(percentage);
+
+    if (mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          title: const Text(
+            'Тест завершён!',
+            textAlign: TextAlign.center,
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              percentage == 100
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: Image.asset(
+                        'assets/gifs/salut.gif',
+                        width: 150,
+                        height: 150,
+                        fit: BoxFit.cover,
+                      ),
+                    )
+                  : Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: correctCount >= _questions.length * 0.7
+                            ? AppTheme.success.withAlpha(25)
+                            : AppTheme.warning.withAlpha(25),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        correctCount >= _questions.length * 0.7
+                            ? Icons.celebration_rounded
+                            : Icons.auto_awesome_rounded,
+                        size: 48,
+                        color: correctCount >= _questions.length * 0.7
+                            ? AppTheme.success
+                            : AppTheme.warning,
+                      ),
+                    ),
+              const SizedBox(height: 16),
+              Text(
+                'Результат: $correctCount из ${_questions.length}',
                 style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textPrimary,
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Время: ${_formatTime(timeSpent)}',
-              style: const TextStyle(
-                fontSize: 14,
-                color: AppTheme.textSecondary,
+              const SizedBox(height: 8),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                decoration: BoxDecoration(
+                  gradient: AppTheme.primaryGradient,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '${percentage.toInt()}%',
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              correctCount >= _questions.length * 0.7
-                  ? 'Отлично! Тема усвоена!'
-                  : 'Попробуйте ещё раз!',
-              style: TextStyle(
-                fontSize: 16,
-                color: correctCount >= _questions.length * 0.7
-                    ? AppTheme.success
-                    : AppTheme.warning,
+              const SizedBox(height: 12),
+              Text(
+                correctCount >= _questions.length * 0.7
+                    ? 'Отлично! Тема усвоена!'
+                    : 'Попробуйте ещё раз!',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: correctCount >= _questions.length * 0.7
+                      ? AppTheme.success
+                      : AppTheme.warning,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (correctCount >= _questions.length * 0.7)
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          context.push('/final-test');
+                        },
+                        icon: const Icon(Icons.workspace_premium_rounded),
+                        label: const Text('Пройти финальный тест'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primary,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ),
+                  if (correctCount >= _questions.length * 0.7)
+                    const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => context.go('/home'),
+                      child: const Text('На главную'),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () async {
-                      final user = FirebaseAuth.instance.currentUser;
-                      final email = user?.email ?? 'unknown';
-                      final recipient = teacherEmail.isNotEmpty
-                          ? teacherEmail
-                          : '?';
-                      final subject = Uri.encodeComponent(
-                          'Результат финального теста: $topicName');
-                      final body = Uri.encodeComponent(
-                        'Результат финального теста\n'
-                        'Тема: $topicName\n'
-                        'Результат: $correctCount из ${_questions.length}\n'
-                        'Процент: ${percentage.toInt()}%\n'
-                        'Время: ${_formatTime(timeSpent)}\n'
-                        'Email ученика: $email',
-                      );
-                      final uri = Uri.parse(
-                          'mailto:$recipient?subject=$subject&body=$body');
-                      try {
-                        await launchUrl(uri, mode: LaunchMode.externalApplication);
-                      } catch (_) {
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Не удалось открыть почтовый клиент'),
-                            ),
-                          );
-                        }
-                      }
-                    },
-                    icon: const Icon(Icons.email_rounded),
-                    label: const Text('Отправить учителю'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.accent,
-                      foregroundColor: Colors.white,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => context.go('/home'),
-                    child: const Text('На главную'),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+      );
+    }
   }
 
   @override
@@ -376,7 +325,7 @@ class _FinalTestScreenState extends ConsumerState<FinalTestScreen> {
 
     if (_error != null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Финальный тест')),
+        appBar: AppBar(title: const Text('Тест')),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24.0),
@@ -429,13 +378,6 @@ class _FinalTestScreenState extends ConsumerState<FinalTestScreen> {
     final hasAnswer = _userAnswers[_currentIndex] != null;
     final answeredAll = _userAnswers.every((a) => a != null);
 
-    final isLowTime = _timeSeconds <= 30;
-    final timerColor = isLowTime
-        ? AppTheme.error
-        : _timeSeconds <= 60
-            ? AppTheme.warning
-            : Colors.white;
-
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
@@ -449,34 +391,9 @@ class _FinalTestScreenState extends ConsumerState<FinalTestScreen> {
           ),
           child: IconButton(
             icon: const Icon(Icons.close_rounded),
-            onPressed: () => _finishTest(),
+            onPressed: () => context.go('/home'),
           ),
         ),
-        actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 12),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.white.withAlpha(40),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.timer_rounded, size: 18, color: timerColor),
-                const SizedBox(width: 6),
-                Text(
-                  _formatTime(_timeSeconds),
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: timerColor,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
       body: Column(
         children: [
