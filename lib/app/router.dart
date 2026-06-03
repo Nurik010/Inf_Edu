@@ -1,19 +1,19 @@
 ﻿import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../presentation/auth/login_screen.dart';
-import '../presentation/auth/register_screen.dart';
-import '../presentation/auth/verify_email_screen.dart';
-import '../presentation/screens/completed_topics_screen.dart';
-import '../presentation/screens/edit_profile.dart';
-import '../presentation/screens/home_screen.dart';
-import '../presentation/screens/module_selection_screen.dart';
-import '../presentation/screens/profile_screen.dart';
-import '../presentation/screens/stats_screen.dart';
-import '../presentation/screens/test_screen.dart';
-import '../presentation/screens/final_test_screen.dart';
-import '../presentation/splash/splash_screen.dart';
-import '../domain/providers/auth_providers.dart';
+import '../views/auth/login_screen.dart';
+import '../views/auth/register_screen.dart';
+import '../views/auth/verify_email_screen.dart';
+import '../views/screens/completed_topics_screen.dart';
+import '../views/screens/edit_profile.dart';
+import '../views/screens/home_screen.dart';
+import '../views/screens/module_selection_screen.dart';
+import '../views/screens/profile_screen.dart';
+import '../views/screens/stats_screen.dart';
+import '../views/screens/test_screen.dart';
+import '../views/screens/final_test_screen.dart';
+import '../views/splash/splash_screen.dart';
+import '../viewmodels/auth_viewmodel.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);

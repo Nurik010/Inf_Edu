@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:inf_edu_app/domain/entities/question_model.dart';
-import 'package:inf_edu_app/presentation/widgets/multiple_choice_widget.dart';
-import 'package:inf_edu_app/presentation/widgets/code_ordering_widget.dart';
-import 'package:inf_edu_app/presentation/widgets/matching_widget.dart';
+import 'package:inf_edu_app/models/question_model.dart';
+import 'package:inf_edu_app/views/widgets/multiple_choice_widget.dart';
+import 'package:inf_edu_app/views/widgets/code_ordering_widget.dart';
+import 'package:inf_edu_app/views/widgets/matching_widget.dart';
 
 class QuestionWidget extends StatelessWidget {
   final QuestionModel question;

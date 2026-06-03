@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:inf_edu_app/domain/entities/user_model.dart';
+import 'package:inf_edu_app/models/user_model.dart';
 import 'package:inf_edu_app/services/firestore_service.dart';
 
 final authStateProvider = StreamProvider<User?>((ref) {

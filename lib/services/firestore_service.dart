@@ -1,11 +1,11 @@
 ﻿import 'package:cloud_firestore/cloud_firestore.dart';
 
-import 'package:inf_edu_app/domain/entities/test_result_model.dart';
-import 'package:inf_edu_app/domain/entities/final_test_result_model.dart';
-import 'package:inf_edu_app/domain/entities/topic_model.dart';
+import 'package:inf_edu_app/models/test_result_model.dart';
+import 'package:inf_edu_app/models/final_test_result_model.dart';
+import 'package:inf_edu_app/models/topic_model.dart';
 import 'package:inf_edu_app/data/datasources/default_questions.dart';
-import 'package:inf_edu_app/domain/entities/question_model.dart';
-import 'package:inf_edu_app/domain/entities/user_model.dart';
+import 'package:inf_edu_app/models/question_model.dart';
+import 'package:inf_edu_app/models/user_model.dart';
 
 class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;

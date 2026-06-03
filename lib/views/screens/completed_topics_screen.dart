@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:inf_edu_app/domain/entities/test_result_model.dart';
-import 'package:inf_edu_app/domain/entities/final_test_result_model.dart';
+import 'package:inf_edu_app/models/test_result_model.dart';
+import 'package:inf_edu_app/models/final_test_result_model.dart';
 import '../../services/firestore_service.dart';
 import '../../core/theme/app_theme.dart';
 

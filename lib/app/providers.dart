@@ -1,1 +1,1 @@
-export '../domain/providers/auth_providers.dart';
+export '../viewmodels/auth_viewmodel.dart';
