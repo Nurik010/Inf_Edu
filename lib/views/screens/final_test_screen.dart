@@ -8,7 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:inf_edu_app/models/question_model.dart';
 import 'package:inf_edu_app/models/final_test_result_model.dart';
 import 'package:inf_edu_app/views/widgets/question_widget.dart';
-import '../../app/providers.dart';
+import '../../viewmodels/auth_viewmodel.dart';
 import '../../services/firestore_service.dart';
 import '../../core/theme/app_theme.dart';
 
