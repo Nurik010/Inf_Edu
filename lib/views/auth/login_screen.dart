@@ -110,24 +110,10 @@ class _LoginScreenState extends State<LoginScreen>
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            gradient: AppTheme.primaryGradient,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppTheme.primary.withAlpha(80),
-                                blurRadius: 20,
-                                offset: const Offset(0, 8),
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.school_rounded,
-                            size: 48,
-                            color: Colors.white,
-                          ),
+                        Image.asset(
+                          'assets/icon_person.png',
+                          width: 96,
+                          height: 96,
                         ),
                         const SizedBox(height: 24),
                         const Text(

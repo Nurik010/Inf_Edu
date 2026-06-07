@@ -10,7 +10,7 @@ import 'package:inf_edu_app/models/user_model.dart';
 class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // User operations
+
   Future<void> saveUser(UserModel user) async {
     await _firestore.collection('users').doc(user.id).set(user.toJson());
   }
@@ -27,7 +27,7 @@ class FirestoreService {
     await _firestore.collection('users').doc(userId).update(data);
   }
 
-  // Topics
+  
   Future<List<TopicModel>> getTopics({String? grade}) async {
     try {
       Query query = _firestore.collection('topics');
@@ -47,7 +47,7 @@ class FirestoreService {
     }
   }
 
-  // Questions
+
   Future<List<QuestionModel>> getQuestions(String topicId) async {
     try {
       final snapshot = await _firestore
@@ -57,10 +57,8 @@ class FirestoreService {
           .get();
 
       if (snapshot.docs.isEmpty) {
-        print('Вопросов в Firestore нет, использую fallback');
         return DefaultQuestions.getQuestions(topicId);
       }
-
       return snapshot.docs
           .map((doc) => QuestionModel.fromJson(doc.id, doc.data() as Map<String, dynamic>))
           .toList()
@@ -71,7 +69,7 @@ class FirestoreService {
     }
   }
 
-  // Final questions
+
   Future<List<QuestionModel>> getFinalQuestions(String topicId) async {
     try {
       final snapshot = await _firestore
@@ -100,7 +98,7 @@ class FirestoreService {
     await _updateUserStats(result.userId);
   }
 
-  // Test results
+
   Future<void> saveTestResult(TestResultModel result) async {
     await _firestore.collection('test_results').add(result.toJson());
     await _updateUserStats(result.userId);
@@ -143,7 +141,7 @@ class FirestoreService {
         .toList();
   }
 
-  // Update user statistics
+ 
   Future<void> _updateUserStats(String userId) async {
     final results = await getUserTestResults(userId);
     final totalTests = results.length;
@@ -157,7 +155,6 @@ class FirestoreService {
     });
   }
 
-  // Global statistics
   Future<List<Map<String, dynamic>>> getGlobalRanking() async {
     final snapshot = await _firestore
         .collection('users')
@@ -175,7 +172,7 @@ class FirestoreService {
     }).toList();
   }
 
-  // Completed topics
+  
   Future<List<String>> getCompletedTopicIds(String userId) async {
     final results = await getUserTestResults(userId);
     final completedTopics = <String>{};
